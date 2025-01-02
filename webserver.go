@@ -22,14 +22,11 @@ func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Преобразуем строку now в time.Time
-	now, err := time.Parse("20060102", nowStr)
+	_, err := time.Parse("20060102", nowStr)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при разборе даты 'now': %v", err), http.StatusBadRequest)
 		return
 	}
-
-	// Используем переменную now для логирования
-	log.Printf("Текущая дата (now): %v\n", now)
 
 	// Преобразуем строку date в time.Time
 	dateParsed, err := time.Parse("20060102", date)
@@ -38,13 +35,18 @@ func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Проверка диапазона годов
+	if dateParsed.Year() < 1900 || dateParsed.Year() > 2100 {
+		log.Printf("Год %d выходит за пределы диапазона (1900–2100)", dateParsed.Year())
+		w.Header().Set("Content-Type", "text/plain")
+		fmt.Fprint(w, "") // Возвращаем пустую строку для недопустимых годов
+		return
+	}
+
 	// Если repeat == "y", сдвигаем дату на 1 год вперед
 	if repeat == "y" {
 		nextDate := dateParsed.AddDate(1, 0, 0)
-		if nextDate.Before(dateParsed) {
-			http.Error(w, fmt.Sprintf("Следующая дата %v не может быть раньше текущей даты %v", nextDate.Format("20060102"), dateParsed.Format("20060102")), http.StatusBadRequest)
-			return
-		}
+		log.Printf("Повторение год: %v -> %v\n", dateParsed, nextDate)
 		w.Header().Set("Content-Type", "text/plain")
 		fmt.Fprint(w, nextDate.Format("20060102"))
 		return
@@ -60,10 +62,7 @@ func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		nextDate := dateParsed.AddDate(0, 0, days)
-		if nextDate.Before(dateParsed) {
-			http.Error(w, fmt.Sprintf("Следующая дата %v не может быть раньше текущей даты %v", nextDate.Format("20060102"), dateParsed.Format("20060102")), http.StatusBadRequest)
-			return
-		}
+		log.Printf("Повторение дни: %v + %d дней -> %v\n", dateParsed, days, nextDate)
 		w.Header().Set("Content-Type", "text/plain")
 		fmt.Fprint(w, nextDate.Format("20060102"))
 		return

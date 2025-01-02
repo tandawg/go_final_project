@@ -17,6 +17,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 
 	// Проверка диапазона допустимых годов
 	if taskDate.Year() < 1900 || taskDate.Year() > 2100 {
+		fmt.Printf("Отказ: год %d вне допустимого диапазона (1900–2100)\n", taskDate.Year())
 		return "", nil // Возвращаем пустую строку для некорректных годов
 	}
 
@@ -37,24 +38,20 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		}
 
 		nextDate := taskDate.AddDate(0, 0, days)
-		if nextDate.Before(now) {
-			for nextDate.Before(now) {
-				nextDate = nextDate.AddDate(0, 0, days)
-				if nextDate.Year() > 2100 {
-					return "", nil
-				}
+		for nextDate.Before(now) {
+			nextDate = nextDate.AddDate(0, 0, days)
+			if nextDate.Year() > 2100 {
+				return "", nil
 			}
 		}
 		return nextDate.Format("20060102"), nil
 
 	case "y": // Повторение в годах
 		nextDate := taskDate.AddDate(1, 0, 0)
-		if nextDate.Before(now) {
-			for nextDate.Before(now) {
-				nextDate = nextDate.AddDate(1, 0, 0)
-				if nextDate.Year() > 2100 {
-					return "", nil
-				}
+		for nextDate.Before(now) {
+			nextDate = nextDate.AddDate(1, 0, 0)
+			if nextDate.Year() > 2100 {
+				return "", nil
 			}
 		}
 		return nextDate.Format("20060102"), nil
