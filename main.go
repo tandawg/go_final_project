@@ -2,8 +2,8 @@ package main
 
 func main() {
 	// Запуск базы данных
-	db := createDatabase()
-	defer db.Close()
+	DB := createDatabase()
+	defer DB.Close()
 
 	// Запуск веб-сервера
 	startServer()
