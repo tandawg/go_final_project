@@ -7,7 +7,7 @@ import (
 )
 
 func PutTaskHandler(w http.ResponseWriter, r *http.Request) {
-	// проверяем, что метод запроса - Put
+	// проверяем, что метод запроса - PUT
 	if r.Method != http.MethodPut {
 		http.Error(w, `{"error": "метод не поддерживается"}`, http.StatusMethodNotAllowed)
 		return

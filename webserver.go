@@ -107,8 +107,8 @@ func startServer() {
 	// Обработчик для API /api/nextdate
 	http.HandleFunc("/api/nextdate", nextDateHandler)
 
-	// Обработчик для API /api/addtask
-	http.HandleFunc("/api/addtask", AddTaskHandler)
+	// Обработчик API для добавления задач (POST)
+	http.HandleFunc("/api/task", AddTaskHandler)
 
 	// Обработчик для API /api/task
 	http.HandleFunc("/api/gettask", GetTaskHandler)
@@ -116,13 +116,13 @@ func startServer() {
 	// Обработчик для API /api/tasks
 	http.HandleFunc("/api/tasks", GetTasksHandler)
 
-	// Обработчик для API POST-запросов
-	http.HandleFunc("/api/posttask", PostTaskHandler)
-
 	// Обработчик для API PUT-запросов
 	http.HandleFunc("/api/puttask", PutTaskHandler)
 
-	// Обработчик для API DELETE-запросов
+	// Обработчик API для завершения задач (POST)
+	http.HandleFunc("/api/task/done", DoneTaskHandler)
+
+	// Обработчик API для удаления задач (DELETE)
 	http.HandleFunc("/api/deletetask", DeleteTaskHandler)
 
 	fmt.Printf("Сервер работает на порту %s\n", port)
