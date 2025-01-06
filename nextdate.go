@@ -60,3 +60,29 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		return "", nil
 	}
 }
+
+// Вспомогательная функция, проверяет корректность формата даты в строке (YYYYMMDD)
+func isValidDate(date string) bool {
+	if len(date) != 8 {
+		return false
+	}
+	year := date[:4]
+	month := date[4:6]
+	day := date[6:8]
+
+	// Проверка все ли части даты валидны
+	yearNum, err1 := strconv.Atoi(year)
+	monthNum, err2 := strconv.Atoi(month)
+	dayNum, err3 := strconv.Atoi(day)
+
+	if err1 != nil || err2 != nil || err3 != nil {
+		return false
+	}
+
+	// Проверка по верхней границе дат, включая исторические даты
+	if yearNum > 2100 || monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31 {
+		return false
+	}
+
+	return true
+}

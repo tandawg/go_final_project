@@ -4,94 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
-	"strings"
-	"strconv"
 )
 
-// Функция обработчика для маршрута /api/nextdate
-func nextDateHandler(w http.ResponseWriter, r *http.Request) {
-	nowStr := r.FormValue("now")
-	date := r.FormValue("date")
-	repeat := r.FormValue("repeat")
-
-	// Преобразуем строку now в time.Time
-	now, err := time.Parse("20060102", nowStr)
-	if err != nil {
-		http.Error(w, "Некорректный формат даты 'now'", http.StatusBadRequest)
-		return
-	}
-
-	// Пробуем преобразовать date в time.Time
-	dateParsed, err := time.Parse("20060102", date)
-	if err != nil || !isValidDate(date) { // Используем isValidDate
-		// Если date некорректна или невалидна, возвращаем пустую строку
-		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprint(w, "")
-		return
-	}
-
-	// Обрабатываем правило repeat
-	switch {
-	case repeat == "y":
-		// Добавляем годы, пока не достигнем ближайшей даты после now
-		nextDate := dateParsed.AddDate(1, 0, 0)
-		for nextDate.Before(now) {
-			nextDate = nextDate.AddDate(1, 0, 0)
-		}
-		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprint(w, nextDate.Format("20060102"))
-
-	case strings.HasPrefix(repeat, "d "):
-		var days int
-		_, err := fmt.Sscanf(repeat, "d %d", &days)
-		if err != nil || days <= 0 || days > 400 {
-			// Некорректное количество дней
-			w.Header().Set("Content-Type", "text/plain")
-			fmt.Fprint(w, "")
-			return
-		}
-		nextDate := dateParsed.AddDate(0, 0, days)
-		for nextDate.Before(now) {
-			nextDate = nextDate.AddDate(0, 0, days)
-		}
-		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprint(w, nextDate.Format("20060102"))
-
-	default:
-		// Если repeat пустой или содержит некорректное значение
-		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprint(w, "")
-	}
-}
-
-// Вспомогательная функция для проверки валидности даты
-func isValidDate(date string) bool {
-	if len(date) != 8 {
-		return false
-	}
-	year := date[:4]
-	month := date[4:6]
-	day := date[6:8]
-
-	// Проверка все ли части даты валидны
-	yearNum, err1 := strconv.Atoi(year)
-	monthNum, err2 := strconv.Atoi(month)
-	dayNum, err3 := strconv.Atoi(day)
-
-	if err1 != nil || err2 != nil || err3 != nil {
-		return false
-	}
-
-	// Проверка по верхней границе дат, включая исторические даты
-	if yearNum > 2100 || monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31 {
-		return false
-	}
-
-	return true
-}
-
-// Запуск сервера
+// startServer запускает HTTP-сервер для обработки запросов API
 func startServer() {
 	port := "7540"
 	if envPort := os.Getenv("TODO_PORT"); envPort != "" {
@@ -101,28 +16,28 @@ func startServer() {
 	staticPath := "./go_final_project/web"
 	fmt.Println("Serving static files from:", staticPath)
 
-	// Обработчик для других статических файлов
+	// Обработчик для маршрута корневого каталога (статические файлы)
 	http.Handle("/", http.FileServer(http.Dir(staticPath)))
 
-	// Обработчик для API /api/nextdate
+	// Обработчик для вычисления следующей даты
 	http.HandleFunc("/api/nextdate", nextDateHandler)
 
-	// Обработчик API для добавления задач (POST)
+	// Обработчик для добавления новой задачи (POST)
 	http.HandleFunc("/api/task", AddTaskHandler)
 
-	// Обработчик для API /api/task
+	// Обработчик для получения данных задачи (GET)
 	http.HandleFunc("/api/gettask", GetTaskHandler)
 
-	// Обработчик для API /api/tasks
+	// Обработчик для получения списка задач (GET)
 	http.HandleFunc("/api/tasks", GetTasksHandler)
 
-	// Обработчик для API PUT-запросов
+	// Обработчик для обновления данных задачи (PUT)
 	http.HandleFunc("/api/puttask", PutTaskHandler)
 
-	// Обработчик API для завершения задач (POST)
+	// Обработчик для завершения задачи (POST)
 	http.HandleFunc("/api/task/done", DoneTaskHandler)
 
-	// Обработчик API для удаления задач (DELETE)
+	// Обработчик для удаления задачи (DELETE)
 	http.HandleFunc("/api/deletetask", DeleteTaskHandler)
 
 	fmt.Printf("Сервер работает на порту %s\n", port)
