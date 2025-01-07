@@ -37,7 +37,8 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		}
 		// Преобразуем количество дней в целое число
 		days, err := strconv.Atoi(repeatParts[1])
-		if err != nil || days <= 0 {
+		if err != nil || days <= 0 || days > 400 {
+			fmt.Printf("Отказ: некорректное количество дней %s\n", repeatParts[1])
 			return "", nil
 		}
 		// Вычисляем следующую дату, добавляя дни
@@ -59,9 +60,10 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		for nextDate.Before(now) {
 			// Если дата раньше текущей, добавляем год снова
 			nextDate = nextDate.AddDate(1, 0, 0)
-			if nextDate.Year() > 2100 {
-				return "", nil
-			}
+		}
+
+		if nextDate.Year() > 2100 {
+			return "", nil
 		}
 		return nextDate.Format("20060102"), nil
 
