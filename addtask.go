@@ -13,13 +13,14 @@ type Response struct {
 	ID    string `json:"id,omitempty"`
 }
 
-// Функция обработчика для маршрута /api/addtask
+// Обработчик для добавления новой задачи
 func AddTaskHandler(w http.ResponseWriter, r *http.Request) {
+	// Проверяем, что запрос выполнен методом POST
 	if r.Method != http.MethodPost {
 		http.Error(w, "метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
-	// Заголовок ответа (устанавливаем заранее)
+	// Устанавливаем заголовок ответа как JSON
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 	// Декодируем JSON из тела запроса
@@ -88,7 +89,7 @@ func AddTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Получаем ID добавленной задачи
+	// Получаем id добавленной задачи
 	id, err := res.LastInsertId()
 	
 	idResp := strconv.Itoa(int(id))

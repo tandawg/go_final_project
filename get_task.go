@@ -9,50 +9,51 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// обработчик для получения задачи по id
+// Обработчик для получения информации о задаче по её id
 func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
-	// проверяем, что метод запроса - GET
+	// Проверяем, что запрос выполнен методом GET
 	if r.Method != http.MethodGet {
 		http.Error(w, `{"error": "метод не поддерживается"}`, http.StatusMethodNotAllowed)
 		return
 	}
 
-	// устанавливаем заголовок ответа как JSON
+	// Устанавливаем заголовок ответа как JSON
 	w.Header().Set("Content-Type", "application/json")
 
-	// получаем id задачи из параметра пути или строки запроса
+	// Получаем id задачи из пути/строки запроса
 	idTask := chi.URLParam(r, "id")
 	if idTask == "" {
 		idTask = r.URL.Query().Get("id")
 	}
 
-	// если id не указан, возвращаем ошибку
+	// Если id задачи не указан, возвращаем сообщение об ошибке
 	if idTask == "" {
 		http.Error(w, `{"error": "не указан идентификатор"}`, http.StatusBadRequest)
 		return
 	}
 
-	// SQL-запрос для получения задачи
+	// SQL-запрос для поиска задачи в базе данных
 	query := "SELECT id, date, title, comment, repeat FROM scheduler WHERE id = ?"
 	row := DB.QueryRow(query, idTask)
 
-	// структура для хранения результата
+	// Переменная для хранения данных найденной задачи
 	var task Task
 	if err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			// если задача не найдена, возвращаем ошибку
+			// Если задача не найдена, возвращаем соответствующий код ошибки
 			http.Error(w, `{"error": "задача не найдена"}`, http.StatusNotFound)
 		} else {
-			// если произошла другая ошибка, возвращаем её
-			http.Error(w, `{"error": "ошибка получения задачи из БД"}`, http.StatusInternalServerError)
+			// При другой ошибке возвращаем сообщение о сбое работы с базой
+			http.Error(w, `{"error": "ошибка получения задачи из базы данных"}`, http.StatusInternalServerError)
 		}
 		return
 	}
 
-	// возвращаем найденную задачу в формате JSON
+	// Формируем и отправляем JSON-ответ с информацией о задаче
 	w.WriteHeader(http.StatusOK)
 	err := json.NewEncoder(w).Encode(task)
 	if err != nil {
+		// Если возникла ошибка формирования JSON, возвращаем соответствующий код
 		http.Error(w, `{"error":"ошибка формирования JSON-ответа"}`, http.StatusInternalServerError)
 		return
 	}

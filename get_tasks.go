@@ -5,73 +5,76 @@ import (
 	"net/http"
 	"time"
 	"database/sql"
-	"log"
 )
 
-// Обработчик для маршрута /api/tasks
+// Обработчик для получения списка задач через маршрут /api/tasks
 func GetTasksHandler(w http.ResponseWriter, r *http.Request) {
-
-	// проверяем, что метод запроса - GET
+	// Проверяем, что запрос выполнен методом GET
 	if r.Method != http.MethodGet {
 		http.Error(w, `{"error": "метод не поддерживается"}`, http.StatusMethodNotAllowed)
 		return
 	}
 
-	// заголовок ответа
+	// Устанавливаем заголовок ответа как JSON
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-	// Чтение параметра поиска из запроса
+	// Считываем значение параметра "search" из строки запроса
 search := r.URL.Query().Get("search")
 var tasks []Task
 
-// Формирование SQL-запроса
+// Переменные для выполнения SQL-запроса
 var rows *sql.Rows
 var err error
 
 if search != "" {
-    // Попытка распарсить параметр как дату
+    // Проверяем, является ли параметр "search" датой
     date, err := time.Parse("02.01.2006", search)
     if err == nil { // Если это дата
-        // Преобразуем дату в нужный формат 20060102
+        // Преобразуем дату в формат базы данных (20060102)
         search = date.Format("20060102")
-        // Ищем задачи по дате
+        // Выполняем запрос для поиска задач по дате
         rows, err = DB.Query(`SELECT id, date, title, comment, repeat FROM scheduler WHERE date = ? ORDER BY date ASC LIMIT 50`, search)
         if err != nil {
-            log.Fatal(err) // Ошибка при запросе
-        }
-    } else { // Если это строка для поиска в заголовке или комментарии
+            http.Error(w, `{"error": "Ошибка запроса к базе данных"}`, http.StatusInternalServerError)
+            return
+        }        
+    } else { // Если параметр — строка для поиска в заголовке/комментарии
         rows, err = DB.Query(`SELECT id, date, title, comment, repeat FROM scheduler WHERE title LIKE ? OR comment LIKE ? ORDER BY date ASC LIMIT 50`, "%"+search+"%", "%"+search+"%")
         if err != nil {
-            log.Fatal(err) // Ошибка при запросе
-        }
+            http.Error(w, `{"error": "Ошибка запроса к базе данных"}`, http.StatusInternalServerError)
+            return
+        }        
     }
 } else {
-    // Если search не указан, просто берем ближайшие задачи
+    // Если параметр "search" отсутствует, выбираем ближайшие задачи
     rows, err = DB.Query(`SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date ASC LIMIT 50`)
     if err != nil {
-        log.Fatal(err) // Ошибка при запросе
-    }
+        http.Error(w, `{"error": "Ошибка запроса к базе данных"}`, http.StatusInternalServerError)
+        return
+    }    
 }
 
-// Обработка результатов запроса
+// Обрабатываем строки результата запроса
 defer rows.Close()
 for rows.Next() {
     var task Task
+    // Считываем данные задачи из текущей строки результата
     if err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat); err != nil {
         w.Header().Set("Content-Type", "application/json")
         w.WriteHeader(http.StatusInternalServerError)
         json.NewEncoder(w).Encode(map[string]string{"error": "Ошибка чтения данных"})
         return
     }
+    // Добавляем задачу в итоговый список
     tasks = append(tasks, task)
 }
 
-// Если задач нет, возвращаем пустой список
+// Если задачи не найдены, возвращаем пустой массив
 if len(tasks) == 0 {
     tasks = []Task{}
 }
 
-// Формируем и отправляем ответ
+// Отправляем JSON-ответ с данными задач
 w.Header().Set("Content-Type", "application/json")
 json.NewEncoder(w).Encode(map[string][]Task{"tasks": tasks})
 }

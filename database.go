@@ -15,7 +15,12 @@ func init() {
 }
 
 func createDatabase() *sql.DB {
-    dbFile := "scheduler.db"
+    // Получение пути к базе данных из переменной окружения
+    dbFile := os.Getenv("TODO_DBFILE")
+    if dbFile == "" {
+        dbFile = "scheduler.db" // Путь по умолчанию
+    }
+
     _, err := os.Stat(dbFile)
 
     var install bool
