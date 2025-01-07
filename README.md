@@ -43,7 +43,9 @@
 1. Соберите Docker-образ:
     docker build -t go-final-project .
 2. Запустите контейнер:
-    команда c монтированием файла базы данных:docker run -d -p 7540:7540 -v "$(pwd)/scheduler.db:/data/scheduler.db" go-final-project 
-    либо команда без монтирования файла базы данных: docker run -d -p 7540:7540 go-final-project
-3. Откройте браузер и перейдите по адресу:
+     команда c монтированием файла базы данных:
+   docker run -d -p 7540:7540 -v "$(pwd)/scheduler.db:/data/scheduler.db" go-final-project 
+    либо команда без монтирования файла базы данных:
+   docker run -d -p 7540:7540 go-final-project
+4. Откройте браузер и перейдите по адресу:
     http://localhost:7540/
